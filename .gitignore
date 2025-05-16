@@ -1,0 +1,83 @@
+# Xcode
+#
+# gitignore 文件适用于Swift/Xcode项目
+#
+## 用户设置
+xcuserdata/
+
+## App打包信息
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Swift包管理器
+#
+# 将这些添加到现有的.gitignore文件中，如有必要可以注释这些行
+.build/
+DerivedData/
+
+# CocoaPods
+#
+# Pods/目录虽然应该包含在版本控制中，但推荐使用bundler或类似工具管理依赖
+Pods/
+
+# Carthage
+#
+# 添加这些行到您的.gitignore文件，如有需要
+Carthage/Checkouts
+Carthage/Build/
+
+# fastlane
+#
+# 建议不要储存fastlane的截图，因为大部分截图容易被重新生成
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Code Injection
+#
+# 这些可能在运行中被生成
+iOSInjectionProject/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# 缩略图
+._*
+
+# 可能会出现在卷根目录中的文件
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# IDE
+#
+# 与Xcode工作区相关的目录
+*.xcworkspace
+
+# Swift PM
+.swiftpm/
+Package.resolved
+
+# 其他
+*.moved-aside
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+/*.gcno 
