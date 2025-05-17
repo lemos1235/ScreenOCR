@@ -29,6 +29,9 @@ class ScreenCaptureService: NSObject {
     // 用于存储异步任务
     private var activeTasks: [Task<Void, Never>] = []
     
+    // UserDefaults键
+    private let isFirstLaunchKey = "isFirstLaunch"
+    
     override init() {
         super.init()
     }
@@ -75,6 +78,18 @@ class ScreenCaptureService: NSObject {
             // 已经有权限
             completion(true)
         case false:
+            // 检查是否是首次启动
+            let isFirstLaunch = UserDefaults.standard.object(forKey: isFirstLaunchKey) == nil
+            
+            // 如果是首次启动，标记为非首次启动并直接请求权限
+            if isFirstLaunch {
+                UserDefaults.standard.set(false, forKey: isFirstLaunchKey)
+                CGRequestScreenCaptureAccess()
+                completion(false)
+                return
+            }
+            
+            // 非首次启动，显示提示
             // 请求权限
             CGRequestScreenCaptureAccess()
             
@@ -124,10 +139,10 @@ class ScreenCaptureService: NSObject {
         // 创建选区视图
         var selectionView = SelectionOverlayView()
         selectionView.onSelectionComplete = { [weak self] selectedRect in
-           self?.captureSelectedArea(selectedRect)
+            self?.captureSelectedArea(selectedRect)
         }
         selectionView.onSelectionCancel = { [weak self] in
-           self?.cancelCapture()
+            self?.cancelCapture()
         }
         
         // 保存引用

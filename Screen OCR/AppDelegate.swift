@@ -20,6 +20,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // 登录启动菜单项
     private var startAtLoginMenuItem: NSMenuItem!
     
+    // UserDefaults键
+    private let selectedLanguageKey = "selectedLanguage"
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         // 初始化截图服务
         captureService = ScreenCaptureService()
@@ -77,7 +80,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // 添加自动检测选项
         let autoItem = NSMenuItem(title: "Automatic", action: #selector(selectLanguage(_:)), keyEquivalent: "")
-        autoItem.state = .on // 默认选中
         autoItem.representedObject = "auto"
         
         // 添加自动检测的图标
@@ -103,6 +105,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         languageMenuItem.submenu = languageMenu
         statusMenu.addItem(languageMenuItem)
         
+        // 从UserDefaults加载上次选择的语言
+        loadSavedLanguage(languageMenu)
+        
         statusMenu.addItem(NSMenuItem.separator())
         
         // 添加启动登录菜单项
@@ -112,6 +117,35 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         statusMenu.addItem(NSMenuItem.separator())
         statusMenu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
+    }
+    
+    // 从UserDefaults加载上次选择的语言
+    private func loadSavedLanguage(_ languageMenu: NSMenu) {
+        let savedLanguage = UserDefaults.standard.string(forKey: selectedLanguageKey) ?? "auto"
+        
+        // 设置当前选中的语言
+        for item in languageMenu.items {
+            if let itemCode = item.representedObject as? String, itemCode == savedLanguage {
+                item.state = .on
+                
+                // 更新selectedLanguages数组
+                if savedLanguage == "auto" {
+                    selectedLanguages = []
+                } else {
+                    selectedLanguages = [savedLanguage]
+                }
+                break
+            } else {
+                item.state = .off
+            }
+        }
+        
+        // 如果没有找到匹配项，默认选择"auto"
+        if selectedLanguages.isEmpty && savedLanguage != "auto" {
+            if let autoItem = languageMenu.items.first(where: { ($0.representedObject as? String) == "auto" }) {
+                autoItem.state = .on
+            }
+        }
     }
     
     // 添加语言菜单项
@@ -188,6 +222,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 // 特定语言
                 selectedLanguages = [languageCode]
             }
+            
+            // 保存选择到UserDefaults
+            UserDefaults.standard.set(languageCode, forKey: selectedLanguageKey)
         }
     }
     
