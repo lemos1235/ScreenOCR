@@ -42,7 +42,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "camera.viewfinder", accessibilityDescription: "屏幕截图")
+            button.image = NSImage(named: "StatusBarIcon")
+            button.image?.size = NSSize(width: 18, height: 18)
             
             // 设置按钮行为
             button.target = self
@@ -60,13 +61,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // 确保菜单使用系统主题样式
         statusMenu.autoenablesItems = true
-        statusMenu.appearance = NSAppearance.current
-
-        // 添加截图子菜单
-        statusMenu.addItem(NSMenuItem(title: "Capture", action: #selector(startScreenCapture), keyEquivalent: ""))
         
+        // 添加截图子菜单
+        let captureMenuItem = NSMenuItem(
+            title: "Capture",
+            action: #selector(startScreenCapture),
+            keyEquivalent: "o"
+        )
+        captureMenuItem.keyEquivalentModifierMask = [.option]
+        statusMenu.addItem(captureMenuItem)
+
         // 添加语言选择子菜单
-        languageMenuItem = NSMenuItem(title: "Language", action: nil, keyEquivalent: "")
+        languageMenuItem = NSMenuItem(title: "OCR Language", action: nil, keyEquivalent: "")
         let languageMenu = NSMenu()
         
         // 添加自动检测选项
@@ -96,14 +102,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         languageMenuItem.submenu = languageMenu
         statusMenu.addItem(languageMenuItem)
-
+        
         statusMenu.addItem(NSMenuItem.separator())
-
+        
         // 添加启动登录菜单项
         startAtLoginMenuItem = NSMenuItem(title: "Start at Login", action: #selector(toggleStartAtLogin), keyEquivalent: "")
         startAtLoginMenuItem.state = isLoginItemEnabled() ? .on : .off
         statusMenu.addItem(startAtLoginMenuItem)
-
+        
         statusMenu.addItem(NSMenuItem.separator())
         statusMenu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
     }
@@ -192,10 +198,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // 右键点击时显示菜单，正确定位在状态栏下方
             if let button = statusItem.button {
                 let statusItemFrame = button.window?.frame ?? NSRect.zero
-                statusMenu.popUp(positioning: statusMenu.item(at: 0), 
-                                at: NSPoint(x: statusItemFrame.origin.x, 
-                                           y: statusItemFrame.origin.y - 5), 
-                                in: nil)
+                statusMenu.popUp(positioning: statusMenu.item(at: 0),
+                                 at: NSPoint(x: statusItemFrame.origin.x,
+                                             y: statusItemFrame.origin.y - 5),
+                                 in: nil)
             }
         } else {
             // 左键点击直接截图
