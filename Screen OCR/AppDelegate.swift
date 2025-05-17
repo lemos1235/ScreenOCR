@@ -2,6 +2,7 @@ import Cocoa
 import SwiftUI
 import Combine
 import Vision
+import ServiceManagement
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
@@ -15,6 +16,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     // 语言菜单项
     private var languageMenuItem: NSMenuItem!
+    
+    // 登录启动菜单项
+    private var startAtLoginMenuItem: NSMenuItem!
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         // 初始化截图服务
@@ -57,7 +61,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 确保菜单使用系统主题样式
         statusMenu.autoenablesItems = true
         statusMenu.appearance = NSAppearance.current
-        
+
+        // 添加截图子菜单
         statusMenu.addItem(NSMenuItem(title: "Capture", action: #selector(startScreenCapture), keyEquivalent: ""))
         
         // 添加语言选择子菜单
@@ -91,7 +96,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         languageMenuItem.submenu = languageMenu
         statusMenu.addItem(languageMenuItem)
-        
+
+        statusMenu.addItem(NSMenuItem.separator())
+
+        // 添加启动登录菜单项
+        startAtLoginMenuItem = NSMenuItem(title: "Start at Login", action: #selector(toggleStartAtLogin), keyEquivalent: "")
+        startAtLoginMenuItem.state = isLoginItemEnabled() ? .on : .off
+        statusMenu.addItem(startAtLoginMenuItem)
+
         statusMenu.addItem(NSMenuItem.separator())
         statusMenu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
     }
@@ -203,5 +215,65 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @objc private func quitApp() {
         NSApp.terminate(nil)
+    }
+    
+    // MARK: - 登录启动相关方法
+    
+    // 检查是否设置为登录启动
+    private func isLoginItemEnabled() -> Bool {
+        if #available(macOS 13.0, *) {
+            // macOS 13及以上使用新API
+            return SMAppService.mainApp.status == .enabled
+        } else {
+            // 旧版macOS使用传统方法检查登录项
+            let bundleID = Bundle.main.bundleIdentifier!
+            return (LSCopyApplicationURLsForBundleIdentifier(bundleID as CFString, nil)?.takeRetainedValue() as? [URL])?.isEmpty == false
+        }
+    }
+    
+    // 切换登录启动状态
+    @objc private func toggleStartAtLogin() {
+        let isEnabled = isLoginItemEnabled()
+        
+        if #available(macOS 13.0, *) {
+            // macOS 13及以上使用新API
+            do {
+                if isEnabled {
+                    try SMAppService.mainApp.unregister()
+                } else {
+                    try SMAppService.mainApp.register()
+                }
+                // 更新菜单项状态
+                startAtLoginMenuItem.state = isLoginItemEnabled() ? .on : .off
+            } catch {
+                print("无法切换登录项状态: \(error)")
+            }
+        } else {
+            // 旧版macOS使用传统方法
+            if let bundleURL = Bundle.main.bundleURL.absoluteURL as CFURL? {
+                let loginItemsRef = LSSharedFileListCreate(nil, kLSSharedFileListSessionLoginItems.takeRetainedValue(), nil)?.takeRetainedValue()
+                
+                if isEnabled {
+                    // 移除登录项
+                    if let loginItems = LSSharedFileListCopySnapshot(loginItemsRef!, nil)?.takeRetainedValue() as? [LSSharedFileListItem] {
+                        let bundleID = Bundle.main.bundleIdentifier!
+                        for loginItem in loginItems {
+                            if let itemURL = LSSharedFileListItemCopyResolvedURL(loginItem, 0, nil)?.takeRetainedValue() as URL?,
+                               let itemBundleID = Bundle(url: itemURL)?.bundleIdentifier,
+                               itemBundleID == bundleID {
+                                LSSharedFileListItemRemove(loginItemsRef!, loginItem)
+                                break
+                            }
+                        }
+                    }
+                } else {
+                    // 添加登录项
+                    LSSharedFileListInsertItemURL(loginItemsRef!, kLSSharedFileListItemLast.takeRetainedValue(), nil, nil, bundleURL, nil, nil)
+                }
+                
+                // 更新菜单项状态
+                startAtLoginMenuItem.state = isLoginItemEnabled() ? .on : .off
+            }
+        }
     }
 }
