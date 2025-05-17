@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Set version number
+        id: set_version
+        run: echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+
+      - name: Update Info.plist
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${{ env.VERSION }}" "Screen OCR/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ env.VERSION }}" "Screen OCR/Info.plist"
+
+      - name: Build the app
+        run: |
+          xcodebuild clean archive -project "Screen OCR.xcodeproj" -scheme "Screen OCR" -archivePath "Screen OCR.xcarchive" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+      - name: Package Macos app
+        run: |
+          mkdir -p "Screen OCR-${{ env.VERSION }}"
+          cp -R "Screen OCR.xcarchive/Products/Applications/Screen OCR.app" "Screen OCR-${{ env.VERSION }}"
+          zip -r "Screen-OCR-${{ env.VERSION }}-macos.zip" "Screen OCR-${{ env.VERSION }}"
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Screen-OCR-${{ env.VERSION }}-macos.zip
+          name: Release ${{ env.VERSION }}
+          tag_name: v${{ env.VERSION }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
