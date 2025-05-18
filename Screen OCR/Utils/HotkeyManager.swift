@@ -6,7 +6,7 @@ import Carbon
  */
 class HotkeyManager {
     // 定义管理的热键ID
-    private var hotKeyID = 0
+    private(set) var hotKeyID = 0
     private var hotKeyRefs: [Int: EventHotKeyRef] = [:]
     private var hotKeyHandlers: [Int: () -> Void] = [:]
     
@@ -154,39 +154,51 @@ class HotkeyManager {
 /**
  常用键盘按键映射
  */
-enum KeyCode {
-    case a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z
-    case escape
+enum KeyCode: Int, CaseIterable, Codable {
+    case a = 0, b = 11, c = 8, d = 2, e = 14, f = 3, g = 5, h = 4, i = 34, j = 38
+    case k = 40, l = 37, m = 46, n = 45, o = 31, p = 35, q = 12, r = 15, s = 1
+    case t = 17, u = 32, v = 9, w = 13, x = 7, y = 16, z = 6
     
     var carbonKeyCode: Int {
+        return self.rawValue
+    }
+    
+    var displayName: String {
+        return self.description.uppercased()
+    }
+    
+    var keyEquivalent: String {
+        return self.description
+    }
+    
+    var description: String {
         switch self {
-        case .a: return 0
-        case .b: return 11
-        case .c: return 8
-        case .d: return 2
-        case .e: return 14
-        case .f: return 3
-        case .g: return 5
-        case .h: return 4
-        case .i: return 34
-        case .j: return 38
-        case .k: return 40
-        case .l: return 37
-        case .m: return 46
-        case .n: return 45
-        case .o: return 31
-        case .p: return 35
-        case .q: return 12
-        case .r: return 15
-        case .s: return 1
-        case .t: return 17
-        case .u: return 32
-        case .v: return 9
-        case .w: return 13
-        case .x: return 7
-        case .y: return 16
-        case .z: return 6
-        case .escape: return 53
+        case .a: return "a"
+        case .b: return "b"
+        case .c: return "c"
+        case .d: return "d"
+        case .e: return "e"
+        case .f: return "f"
+        case .g: return "g"
+        case .h: return "h"
+        case .i: return "i"
+        case .j: return "j"
+        case .k: return "k"
+        case .l: return "l"
+        case .m: return "m"
+        case .n: return "n"
+        case .o: return "o"
+        case .p: return "p"
+        case .q: return "q"
+        case .r: return "r"
+        case .s: return "s"
+        case .t: return "t"
+        case .u: return "u"
+        case .v: return "v"
+        case .w: return "w"
+        case .x: return "x"
+        case .y: return "y"
+        case .z: return "z"
         }
     }
 }
@@ -194,11 +206,11 @@ enum KeyCode {
 /**
  修饰键映射
  */
-enum ModifierKey {
-    case command
-    case shift
-    case option
-    case control
+enum ModifierKey: Int, CaseIterable, Codable {
+    case command = 0
+    case shift = 1
+    case option = 2
+    case control = 3
     
     var carbonFlag: UInt32 {
         switch self {
@@ -206,6 +218,15 @@ enum ModifierKey {
         case .shift: return UInt32(shiftKey)
         case .option: return UInt32(optionKey)
         case .control: return UInt32(controlKey)
+        }
+    }
+    
+    var displayName: String {
+        switch self {
+        case .command: return "⌘"
+        case .shift: return "⇧"
+        case .option: return "⌥"
+        case .control: return "⌃"
         }
     }
 }

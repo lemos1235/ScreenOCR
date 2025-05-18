@@ -29,6 +29,9 @@ class ScreenCaptureService: NSObject {
     // 用于存储异步任务
     private var activeTasks: [Task<Void, Never>] = []
     
+    // 保存截图前的活动应用，用于截图后恢复
+    private var previousActiveApp: NSRunningApplication?
+    
     // UserDefaults键
     private let isFirstLaunchKey = "isFirstLaunch"
     
@@ -41,6 +44,9 @@ class ScreenCaptureService: NSObject {
      - Parameter completion: 截图完成后的回调
      */
     func startCapture(completion: @escaping CaptureCompletion) {
+        // 保存当前活动应用
+        previousActiveApp = NSWorkspace.shared.frontmostApplication
+        
         // 存储回调
         currentCompletion = completion
         
@@ -49,6 +55,8 @@ class ScreenCaptureService: NSObject {
             guard let self = self, hasPermission else {
                 // 没有权限时调用回调返回nil
                 completion(nil)
+                // 恢复之前的活动应用
+                self?.previousActiveApp?.activate(options: .activateIgnoringOtherApps)
                 return
             }
             
@@ -64,6 +72,12 @@ class ScreenCaptureService: NSObject {
         cleanUp()
         currentCompletion?(nil)
         currentCompletion = nil
+        
+        // 恢复之前的活动应用
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.previousActiveApp?.activate(options: .activateIgnoringOtherApps)
+            self?.previousActiveApp = nil
+        }
     }
     
     // MARK: - Private Methods
@@ -152,11 +166,9 @@ class ScreenCaptureService: NSObject {
         // 设置窗口内容
         window.contentView = NSHostingView(rootView: selectionView)
         
-        // 显示窗口
-        window.makeKeyAndOrderFront(nil)
-        
-        // 确保应用处于活跃状态
-        NSApp.activate(ignoringOtherApps: true)
+        // 显示窗口，但不激活应用
+        window.orderFront(nil)  // 使用orderFront而不是makeKeyAndOrderFront
+        window.makeKey()  // 让窗口接收键盘事件，但不激活应用
     }
     
     /**
@@ -167,6 +179,11 @@ class ScreenCaptureService: NSObject {
         guard NSScreen.main != nil else {
             cleanUp()
             currentCompletion?(nil)
+            // 恢复之前的活动应用
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.previousActiveApp?.activate(options: .activateIgnoringOtherApps)
+                self?.previousActiveApp = nil
+            }
             return
         }
         
@@ -196,9 +213,18 @@ class ScreenCaptureService: NSObject {
                         // 清理UI
                         self.cleanUp()
                         
+                        // 保存之前活动应用的引用
+                        let app = self.previousActiveApp
+                        
                         // 调用回调
                         self.currentCompletion?(image)
                         self.currentCompletion = nil
+                        
+                        // 恢复之前的活动应用
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            app?.activate(options: .activateIgnoringOtherApps)
+                            self.previousActiveApp = nil
+                        }
                     }
                 } catch {
                     DispatchQueue.main.async { [weak self] in
@@ -209,6 +235,12 @@ class ScreenCaptureService: NSObject {
                         // 截图失败
                         self.currentCompletion?(nil)
                         self.currentCompletion = nil
+                        
+                        // 恢复之前的活动应用
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                            self?.previousActiveApp?.activate(options: .activateIgnoringOtherApps)
+                            self?.previousActiveApp = nil
+                        }
                     }
                 }
             }
