@@ -31,7 +31,7 @@ jobs:
       - name: Update Info.plist
         run: |
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${{ env.VERSION }}" "Screen OCR/Info.plist"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ env.VERSION }}" "Screen OCR/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" "Screen OCR/Info.plist"
 
       - name: Build the app
         run: |
