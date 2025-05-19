@@ -72,8 +72,8 @@ class OCRService {
         if !languages.isEmpty {
             request.recognitionLanguages = languages
         } else {
-            // 默认支持多种语言，将日语放在前列以优先识别
-            request.recognitionLanguages = ["ja-JP", "ko-KR", "zh-Hans", "zh-Hant", "en-US", "fr-FR", "de-DE", "es-ES", "it-IT", "pt-BR", "ru-RU"]
+            // 默认支持多种语言
+            request.recognitionLanguages = ["zh-Hans", "zh-Hant", "ja-JP", "ko-KR", "en-US", "fr-FR", "de-DE", "es-ES", "it-IT", "pt-BR", "ru-RU"]
             request.automaticallyDetectsLanguage = true
         }
         

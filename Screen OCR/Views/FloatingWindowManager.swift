@@ -8,15 +8,13 @@ class FloatingWindowManager: NSObject {
     // 窗口最小尺寸
     private let minWindowWidth: CGFloat = 420
     private let minWindowHeight: CGFloat = 110
+    private let ambiguousTitleBarHeight: CGFloat = 28.0
     
     // 存储活跃的浮动窗口（现在只保留一个）
     private var floatingWindow: NSWindow?
     
     // 窗口可见性状态
     private var isWindowVisible = true
-    
-    // OCR服务
-    private let ocrService = OCRService()
     
     /**
      创建一个新的浮动窗口显示截图
@@ -45,7 +43,7 @@ class FloatingWindowManager: NSObject {
         window.backgroundColor = NSColor.windowBackgroundColor
         
         // 设置窗口的最小尺寸约束
-        window.minSize = NSSize(width: minWindowWidth, height: minWindowHeight)
+        window.minSize = NSSize(width: minWindowWidth, height: minWindowHeight + ambiguousTitleBarHeight)
         
         // 设置窗口代理以处理关闭事件
         let windowController = FloatingWindowController(window: window)
@@ -53,24 +51,19 @@ class FloatingWindowManager: NSObject {
             self?.floatingWindow = nil
         }
         
-        // 对图像进行OCR处理，使用指定的语言或默认语言集
-        ocrService.performOCR(on: image, languages: languages) { results in
-            DispatchQueue.main.async {
-                // 创建OCR图像视图
-                let contentView = OCRContentView(frame: NSRect(origin: .zero, size: windowSize))
-                contentView.configure(with: image, ocrResults: results)
-                
-                // 设置内容视图
-                window.contentView = contentView
-                
-                // 保存并显示窗口
-                self.floatingWindow = window
-                window.makeKeyAndOrderFront(nil)
-                
-                // 确保应用处于活跃状态
-                NSApp.activate(ignoringOtherApps: true)
-            }
-        }
+        // 创建OCR图像视图
+        let contentView = OCRContentView(frame: NSRect(origin: .zero, size: windowSize),
+                                         image: image, locales: languages)
+        
+        // 设置内容视图
+        window.contentView = contentView
+        
+        // 保存并显示窗口
+        self.floatingWindow = window
+        window.makeKeyAndOrderFront(nil)
+        
+        // 确保应用处于活跃状态
+        NSApp.activate(ignoringOtherApps: true)
     }
     
     /**
@@ -108,11 +101,13 @@ class FloatingWindowManager: NSObject {
         
         let imageSize = image.size
         
+        
+        
         // 如果图像足够小，直接使用图像大小，但要确保不低于最小尺寸
         if imageSize.width <= maxWidth && imageSize.height <= maxHeight {
             return NSSize(
                 width: max(imageSize.width, minWindowWidth),
-                height: max(imageSize.height, minWindowHeight)
+                height: max(imageSize.height, minWindowHeight) + ambiguousTitleBarHeight
             )
         }
         
@@ -123,7 +118,7 @@ class FloatingWindowManager: NSObject {
         
         return NSSize(
             width: max(imageSize.width * ratio, minWindowWidth),
-            height: max(imageSize.height * ratio, minWindowHeight)
+            height: max(imageSize.height * ratio, minWindowHeight) + ambiguousTitleBarHeight
         )
     }
     
