@@ -279,6 +279,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 切换剪贴板模式设置
         AppSettings.shared.clipboardMode = !AppSettings.shared.clipboardMode
         
+        // 发送剪贴板模式变更通知
+        NotificationCenter.default.post(name: Notification.Name("ClipboardModeChanged"), object: nil)
+        
         // 更新菜单项选中状态
         if let clipboardModeItem = statusMenu.items.first(where: { $0.action == #selector(toggleClipboardMode) }) {
             clipboardModeItem.state = AppSettings.shared.clipboardMode ? .on : .off

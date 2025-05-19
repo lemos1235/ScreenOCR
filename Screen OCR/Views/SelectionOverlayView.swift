@@ -33,6 +33,29 @@ struct SelectionOverlayView: View {
                 Color.black.opacity(0.2)
                     .edgesIgnoringSafeArea(.all)
                 
+                // 提示文本
+                if selectionState == .notStarted {
+                    VStack {
+                        Text("Drag to select area")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Color.black.opacity(0.65))
+                                    .shadow(radius: 8)
+                            )
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                            .padding(.top, 80)
+                        
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .transition(.opacity)
+                    .animation(.easeOut(duration: 0.3), value: selectionState)
+                }
+                
                 // 选区
                 if selectionState != .notStarted {
                     // 选区区域透明，周围是半透明遮罩
@@ -134,4 +157,4 @@ struct SelectionOverlayView_Previews: PreviewProvider {
     static var previews: some View {
         SelectionOverlayView()
     }
-} 
+}

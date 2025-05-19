@@ -112,9 +112,11 @@ class SettingsViewModel: ObservableObject {
     
     @Published var clipboardMode: Bool {
         didSet {
-            AppSettings.shared.clipboardMode = clipboardMode
-            // 发送剪贴板模式变更通知
-            NotificationCenter.default.post(name: Notification.Name("ClipboardModeChanged"), object: nil)
+            if oldValue != clipboardMode {
+                AppSettings.shared.clipboardMode = clipboardMode
+                // 发送剪贴板模式变更通知
+                NotificationCenter.default.post(name: Notification.Name("ClipboardModeChanged"), object: nil)
+            }
         }
     }
     
@@ -173,6 +175,8 @@ class SettingsViewModel: ObservableObject {
     }
     
     private var hotkeyManager: HotkeyManager?
+    private var clipboardModeObserver: NSObjectProtocol?
+    private var isUpdatingFromNotification = false
     
     init(hotkeyManager: HotkeyManager? = nil) {
         self.hotkeyManager = hotkeyManager
@@ -183,6 +187,24 @@ class SettingsViewModel: ObservableObject {
         self.selectedLanguage = AppSettings.shared.selectedLanguage
         self.selectedKeyCode = AppSettings.shared.captureHotkeyKeyCode
         self.selectedModifiers = AppSettings.shared.captureHotkeyModifiers
+        
+        // 监听剪贴板模式变更通知
+        clipboardModeObserver = NotificationCenter.default.addObserver(
+            forName: Notification.Name("ClipboardModeChanged"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self, !self.isUpdatingFromNotification else { return }
+            self.isUpdatingFromNotification = true
+            self.clipboardMode = AppSettings.shared.clipboardMode
+            self.isUpdatingFromNotification = false
+        }
+    }
+    
+    deinit {
+        if let observer = clipboardModeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
     
     private func updateHotkey() {

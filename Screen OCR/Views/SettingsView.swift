@@ -314,6 +314,7 @@ struct RadioButtonView: View {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: isSelected.wrappedValue ? "circle.inset.filled" : "circle")
                     .font(.system(size: 16))
+                    .foregroundColor(isSelected.wrappedValue ? .accentColor : .secondary)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
