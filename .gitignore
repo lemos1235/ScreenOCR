@@ -2,9 +2,6 @@
 #
 # gitignore 文件适用于Swift/Xcode项目
 #
-## 用户设置
-xcuserdata/
-
 ## App打包信息
 *.ipa
 *.dSYM.zip
@@ -76,8 +73,9 @@ Package.resolved
 *.xcscmblueprint
 *.xccheckout
 *.xcodeproj/*
+*.xcodeproj/xcuserdata/
 !*.xcodeproj/project.pbxproj
 !*.xcodeproj/xcshareddata/
 !*.xcodeproj/project.xcworkspace/
 !*.xcworkspace/contents.xcworkspacedata
-/*.gcno 
+/*.gcno

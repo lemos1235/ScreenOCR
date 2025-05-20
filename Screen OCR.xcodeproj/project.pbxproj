@@ -6,8 +6,27 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		CBA253B82DDC6C7900BA5BD2 /* Screen OCR Helper.app in Copy Files */ = {isa = PBXBuildFile; fileRef = CBFA72F42DDC503200DED7AE /* Screen OCR Helper.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CBFA73F22DDC681B00DED7AE /* Copy Files */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Contents/Library/LoginItems;
+			dstSubfolderSpec = 1;
+			files = (
+				CBA253B82DDC6C7900BA5BD2 /* Screen OCR Helper.app in Copy Files */,
+			);
+			name = "Copy Files";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		CBB88F622DD71D23009A21D8 /* Screen OCR.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Screen OCR.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CBFA72F42DDC503200DED7AE /* Screen OCR Helper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Screen OCR Helper.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +35,22 @@
 			path = "Screen OCR";
 			sourceTree = "<group>";
 		};
+		CBFA72F52DDC503200DED7AE /* Screen OCR Helper */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Screen OCR Helper";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		CBB88F5F2DD71D23009A21D8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CBFA72F12DDC503200DED7AE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +64,8 @@
 			isa = PBXGroup;
 			children = (
 				CBB88F642DD71D23009A21D8 /* Screen OCR */,
+				CBFA72F52DDC503200DED7AE /* Screen OCR Helper */,
+				CBFA73062DDC61C300DED7AE /* Frameworks */,
 				CBB88F632DD71D23009A21D8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,8 +74,16 @@
 			isa = PBXGroup;
 			children = (
 				CBB88F622DD71D23009A21D8 /* Screen OCR.app */,
+				CBFA72F42DDC503200DED7AE /* Screen OCR Helper.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		CBFA73062DDC61C300DED7AE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -55,6 +96,7 @@
 				CBB88F5E2DD71D23009A21D8 /* Sources */,
 				CBB88F5F2DD71D23009A21D8 /* Frameworks */,
 				CBB88F602DD71D23009A21D8 /* Resources */,
+				CBFA73F22DDC681B00DED7AE /* Copy Files */,
 			);
 			buildRules = (
 			);
@@ -70,6 +112,28 @@
 			productReference = CBB88F622DD71D23009A21D8 /* Screen OCR.app */;
 			productType = "com.apple.product-type.application";
 		};
+		CBFA72F32DDC503200DED7AE /* Screen OCR Helper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CBFA72FF2DDC503300DED7AE /* Build configuration list for PBXNativeTarget "Screen OCR Helper" */;
+			buildPhases = (
+				CBFA72F02DDC503200DED7AE /* Sources */,
+				CBFA72F12DDC503200DED7AE /* Frameworks */,
+				CBFA72F22DDC503200DED7AE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CBFA72F52DDC503200DED7AE /* Screen OCR Helper */,
+			);
+			name = "Screen OCR Helper";
+			packageProductDependencies = (
+			);
+			productName = "Screen OCR Helper";
+			productReference = CBFA72F42DDC503200DED7AE /* Screen OCR Helper.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -77,11 +141,14 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1620;
+				LastSwiftUpdateCheck = 1630;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					CBB88F612DD71D23009A21D8 = {
 						CreatedOnToolsVersion = 16.2;
+					};
+					CBFA72F32DDC503200DED7AE = {
+						CreatedOnToolsVersion = 16.3;
 					};
 				};
 			};
@@ -100,6 +167,7 @@
 			projectRoot = "";
 			targets = (
 				CBB88F612DD71D23009A21D8 /* Screen OCR */,
+				CBFA72F32DDC503200DED7AE /* Screen OCR Helper */,
 			);
 		};
 /* End PBXProject section */
@@ -112,10 +180,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CBFA72F22DDC503200DED7AE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		CBB88F5E2DD71D23009A21D8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CBFA72F02DDC503200DED7AE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -249,11 +331,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Screen OCR/Screen_OCR.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Screen OCR/Preview Content\"";
-				DEVELOPMENT_TEAM = S886L7U4R5;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -281,11 +364,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Screen OCR/Screen_OCR.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Screen OCR/Preview Content\"";
-				DEVELOPMENT_TEAM = S886L7U4R5;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -302,6 +386,68 @@
 				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "club.lemos.Screen-OCR";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		CBFA72FD2DDC503300DED7AE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Screen OCR Helper/Screen_OCR_Helper.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Screen OCR Helper/Info.plist";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "club.lemos.Screen-OCR-Helper";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		CBFA72FE2DDC503300DED7AE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Screen OCR Helper/Screen_OCR_Helper.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Screen OCR Helper/Info.plist";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "club.lemos.Screen-OCR-Helper";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -324,6 +470,15 @@
 			buildConfigurations = (
 				CBB88F722DD71D24009A21D8 /* Debug */,
 				CBB88F732DD71D24009A21D8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CBFA72FF2DDC503300DED7AE /* Build configuration list for PBXNativeTarget "Screen OCR Helper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CBFA72FD2DDC503300DED7AE /* Debug */,
+				CBFA72FE2DDC503300DED7AE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

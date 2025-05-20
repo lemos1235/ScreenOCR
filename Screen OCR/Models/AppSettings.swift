@@ -19,9 +19,27 @@ class AppSettings {
     // 登录时启动
     var startAtLogin: Bool {
         get { UserDefaults.standard.bool(forKey: startAtLoginKey) }
-        set { 
+        set {
+            // Helper 应用的 Bundle ID
+            let helperBundleID = "club.lemos.Screen-OCR-Helper"
+
             UserDefaults.standard.set(newValue, forKey: startAtLoginKey)
-            updateLoginItemStatus()
+            if #available(macOS 13.0, *) {
+                do {
+                    if startAtLogin {
+                        try SMAppService.loginItem(identifier: helperBundleID).register()
+                    } else {
+                        try SMAppService.loginItem(identifier: helperBundleID).unregister()
+                    }
+                } catch {
+                    print("无法设置登录项: \(error)")
+                }
+            } else {
+                let result = SMLoginItemSetEnabled(helperBundleID as CFString, startAtLogin)
+                if !result {
+                    print("使用 SMLoginItemSetEnabled 设置登录项失败")
+                }
+            }
         }
     }
     
@@ -77,9 +95,8 @@ class AppSettings {
         set { UserDefaults.standard.set(newValue, forKey: selectedLanguageKey) }
     }
     
-    // 私有初始化方法
+    // 初始化，设置默认值
     private init() {
-        // 设置默认值
         if UserDefaults.standard.object(forKey: clickToScreenshotKey) == nil {
             UserDefaults.standard.set(true, forKey: clickToScreenshotKey)
         }
@@ -103,54 +120,4 @@ class AppSettings {
             }
         }
     }
-    
-    // MARK: - 登录启动项相关
-    
-    /// 更新登录项状态
-    private func updateLoginItemStatus() {
-        if #available(macOS 13.0, *) {
-            do {
-                if startAtLogin {
-                    try SMAppService.mainApp.register()
-                } else {
-                    try SMAppService.mainApp.unregister()
-                }
-            } catch {
-                print("无法设置登录项: \(error)")
-            }
-        } else {
-            // 旧版macOS使用传统方法
-            if let bundleURL = Bundle.main.bundleURL.absoluteURL as CFURL? {
-                let loginItemsRef = LSSharedFileListCreate(nil, kLSSharedFileListSessionLoginItems.takeRetainedValue(), nil)?.takeRetainedValue()
-                
-                if startAtLogin {
-                    // 添加登录项
-                    LSSharedFileListInsertItemURL(loginItemsRef!, kLSSharedFileListItemLast.takeRetainedValue(), nil, nil, bundleURL, nil, nil)
-                } else {
-                    // 移除登录项
-                    if let loginItems = LSSharedFileListCopySnapshot(loginItemsRef!, nil)?.takeRetainedValue() as? [LSSharedFileListItem] {
-                        let bundleID = Bundle.main.bundleIdentifier!
-                        for loginItem in loginItems {
-                            if let itemURL = LSSharedFileListItemCopyResolvedURL(loginItem, 0, nil)?.takeRetainedValue() as URL?,
-                               let itemBundleID = Bundle(url: itemURL)?.bundleIdentifier,
-                               itemBundleID == bundleID {
-                                LSSharedFileListItemRemove(loginItemsRef!, loginItem)
-                                break
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    /// 检查登录项是否启用
-    func isLoginItemEnabled() -> Bool {
-        if #available(macOS 13.0, *) {
-            return SMAppService.mainApp.status == .enabled
-        } else {
-            let bundleID = Bundle.main.bundleIdentifier!
-            return (LSCopyApplicationURLsForBundleIdentifier(bundleID as CFString, nil)?.takeRetainedValue() as? [URL])?.isEmpty == false
-        }
-    }
-} 
+}

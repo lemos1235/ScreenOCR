@@ -43,7 +43,7 @@ class HotkeyManager {
         let keyCode = key.carbonKeyCode
         
         // 热键ID结构
-        var hotKeyID = EventHotKeyID(signature: OSType(fourCharCode("SCRN")), id: UInt32(id))
+        let hotKeyID = EventHotKeyID(signature: OSType(fourCharCode("SCRN")), id: UInt32(id))
         
         // 注册热键
         let status = RegisterEventHotKey(UInt32(keyCode),
