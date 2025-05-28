@@ -100,9 +100,7 @@ class FloatingWindowManager: NSObject {
         let maxHeight = screenSize.height * 0.6
         
         let imageSize = image.size
-        
-        
-        
+
         // 如果图像足够小，直接使用图像大小，但要确保不低于最小尺寸
         if imageSize.width <= maxWidth && imageSize.height <= maxHeight {
             return NSSize(

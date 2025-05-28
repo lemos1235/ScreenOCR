@@ -147,7 +147,7 @@ class OCRContentView: NSView, ImageAnalysisOverlayViewDelegate {
     private func calculateDimensions() -> (imageWidth: CGFloat, textFrameWidth: CGFloat, textWidth: CGFloat, height: CGFloat) {
         // 计算文本区域宽度
         let textFrameWidth = max(Constants.minTextWidth, min(bounds.width, initialWidth) * Constants.defaultTextRatio)
-        // 计算文本宽度
+        // 计算文本区域宽度
         let textWidth = textFrameWidth - NSScroller.scrollerWidth(for: .regular, scrollerStyle: NSScroller.preferredScrollerStyle)
         // 计算图像区域宽度
         let imageWidth = max(Constants.minImageWidth, bounds.width - textFrameWidth)

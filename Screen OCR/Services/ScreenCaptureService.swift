@@ -1,7 +1,5 @@
 import Cocoa
 import SwiftUI
-import Combine
-import CoreMedia
 import CoreImage
 import os.log
 import Foundation
@@ -20,17 +18,11 @@ class ScreenCaptureService: NSObject {
     private var overlayWindow: NSWindow?
     private var selectionView: SelectionOverlayView?
     
-    // 用于取消监听Esc键的订阅
-    private var escKeySubscription: AnyCancellable?
-    
-    // 本地事件监视器
-    private var localEventMonitor: Any?
-    
-    // 用于存储异步任务
-    private var activeTasks: [Task<Void, Never>] = []
-    
     // 保存截图前的活动应用，用于截图后恢复
     private var previousActiveApp: NSRunningApplication?
+    
+    // 全屏截图，用于显示在选区界面背景
+    private var fullScreenshot: NSImage?
     
     // UserDefaults键
     private let isFirstLaunchKey = "isFirstLaunch"
@@ -60,8 +52,16 @@ class ScreenCaptureService: NSObject {
                 return
             }
             
-            // 创建覆盖窗口
-            self.createOverlayWindow()
+            // 先进行全屏截图，然后创建覆盖窗口
+            self.captureFullScreen { [weak self] fullScreenImage in
+                guard let self = self else { return }
+                self.fullScreenshot = fullScreenImage
+                
+                // 创建覆盖窗口
+                DispatchQueue.main.async {
+                    self.createOverlayWindow()
+                }
+            }
         }
     }
     
@@ -81,6 +81,35 @@ class ScreenCaptureService: NSObject {
     }
     
     // MARK: - Private Methods
+    
+    /**
+     捕获全屏截图
+     */
+    private func captureFullScreen(completion: @escaping (NSImage?) -> Void) {
+        guard let mainScreen = NSScreen.main else {
+            completion(nil)
+            return
+        }
+        
+        let screenRect = mainScreen.frame
+        
+        // 使用Core Graphics进行全屏截图
+        let cgImage = CGWindowListCreateImage(
+            screenRect,
+            .optionOnScreenOnly,
+            kCGNullWindowID,
+            .bestResolution
+        )
+        
+        guard let cgImage = cgImage else {
+            completion(nil)
+            return
+        }
+        
+        // 转换为NSImage
+        let nsImage = NSImage(cgImage: cgImage, size: screenRect.size)
+        completion(nsImage)
+    }
     
     /**
      检查屏幕录制权限
@@ -131,7 +160,7 @@ class ScreenCaptureService: NSObject {
     private func createOverlayWindow() {
         // 获取主屏幕
         guard let mainScreen = NSScreen.main else { return }
-        
+
         // 创建窗口
         let window = NSWindow(
             contentRect: mainScreen.frame,
@@ -152,6 +181,7 @@ class ScreenCaptureService: NSObject {
         
         // 创建选区视图
         var selectionView = SelectionOverlayView()
+        selectionView.backgroundImage = fullScreenshot // 设置背景截图
         selectionView.onSelectionComplete = { [weak self] selectedRect in
             self?.captureSelectedArea(selectedRect)
         }
@@ -162,21 +192,21 @@ class ScreenCaptureService: NSObject {
         // 保存引用
         self.selectionView = selectionView
         self.overlayWindow = window
-        
+
         // 设置窗口内容
         window.contentView = NSHostingView(rootView: selectionView)
-        
-        // 显示窗口，但不激活应用
-        window.orderFront(nil)  // 使用orderFront而不是makeKeyAndOrderFront
-        window.makeKey()  // 让窗口接收键盘事件，但不激活应用
+        // 显示窗口
+        window.orderFront(nil)
+        window.makeKey()
+
     }
     
     /**
      对选定区域进行截图
      */
     private func captureSelectedArea(_ rect: CGRect) {
-        // 转换为屏幕坐标
-        guard NSScreen.main != nil else {
+        // 检查是否有全屏截图
+        guard let fullScreenImage = fullScreenshot else {
             cleanUp()
             currentCompletion?(nil)
             // 恢复之前的活动应用
@@ -187,101 +217,124 @@ class ScreenCaptureService: NSObject {
             return
         }
         
-        // 关闭遮罩窗口，避免捕获到自己的UI
+        // 获取主屏幕信息
+        guard let mainScreen = NSScreen.main else {
+            cleanUp()
+            currentCompletion?(nil)
+            // 恢复之前的活动应用
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.previousActiveApp?.activate(options: .activateIgnoringOtherApps)
+                self?.previousActiveApp = nil
+            }
+            return
+        }
+        
+        // 关闭遮罩窗口
         overlayWindow?.orderOut(nil)
         
-        // 短暂延迟确保窗口已关闭
+        // 直接从全屏截图中裁剪选定区域
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self = self else { return }
             
-            // 获取选择区域的屏幕坐标
-            let screenRect = CGRect(
-                x: rect.minX,
-                y: rect.minY,
-                width: rect.width,
-                height: rect.height
+            // 将选区坐标转换为图像坐标
+            let imageRect = self.convertSelectionRectToImageRect(
+                selectionRect: rect,
+                screenFrame: mainScreen.frame,
+                image: fullScreenImage
             )
             
-            // 使用Core Graphics进行截图
-            let task = Task {
-                do {
-                    let image = try await self.captureScreenshot(in: screenRect)
-                    
-                    // 在主线程上执行UI更新和回调
-                    DispatchQueue.main.async { [weak self] in
-                        guard let self = self else { return }
-                        // 清理UI
-                        self.cleanUp()
-                        
-                        // 保存之前活动应用的引用
-                        let app = self.previousActiveApp
-                        
-                        // 调用回调
-                        self.currentCompletion?(image)
-                        self.currentCompletion = nil
-                        
-                        // 恢复之前的活动应用
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            app?.activate(options: .activateIgnoringOtherApps)
-                            self.previousActiveApp = nil
-                        }
-                    }
-                } catch {
-                    DispatchQueue.main.async { [weak self] in
-                        guard let self = self else { return }
-                        // 清理UI
-                        self.cleanUp()
-                        
-                        // 截图失败
-                        self.currentCompletion?(nil)
-                        self.currentCompletion = nil
-                        
-                        // 恢复之前的活动应用
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                            self?.previousActiveApp?.activate(options: .activateIgnoringOtherApps)
-                            self?.previousActiveApp = nil
-                        }
-                    }
-                }
-            }
+            // 从全屏截图中裁剪选定区域
+            let croppedImage = self.cropImage(fullScreenImage, toRect: imageRect)
             
-            // 存储任务以便在清理时取消
-            self.activeTasks.append(task)
+            // 清理UI
+            self.cleanUp()
+            
+            // 保存之前活动应用的引用
+            let app = self.previousActiveApp
+            
+            // 调用回调
+            self.currentCompletion?(croppedImage)
+            self.currentCompletion = nil
+            
+            // 恢复之前的活动应用
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                app?.activate(options: .activateIgnoringOtherApps)
+                self.previousActiveApp = nil
+            }
         }
     }
     
     /**
-     使用Core Graphics捕获屏幕截图
+     将选区坐标转换为图像坐标
      */
-    private func captureScreenshot(in rect: CGRect) async throws -> CGImage? {
-        print("矩形:", rect)
+    private func convertSelectionRectToImageRect(
+        selectionRect: CGRect,
+        screenFrame: CGRect,
+        image: NSImage
+    ) -> CGRect {
+        // 获取图像的CGImage来获得实际像素尺寸
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            return selectionRect
+        }
         
-        // 使用Core Graphics API捕获屏幕而不是ScreenCaptureKit
-        // 这种方法不会在顶部菜单栏显示录制指示器
-        let cgImage = CGWindowListCreateImage(
-            rect,
-            .optionOnScreenOnly,
-            kCGNullWindowID,
-            .bestResolution
+        // 获取图像的实际像素尺寸
+        let imagePixelSize = CGSize(width: cgImage.width, height: cgImage.height)
+        
+        // 获取屏幕的逻辑尺寸
+        let screenSize = screenFrame.size
+        
+        // 计算缩放比例
+        // 这里使用实际像素尺寸与屏幕逻辑尺寸的比例
+        let scaleX = imagePixelSize.width / screenSize.width
+        let scaleY = imagePixelSize.height / screenSize.height
+        
+        // 转换选区坐标到图像坐标
+        // SwiftUI 的坐标系是左上角为原点，与图像坐标系一致
+        let imageRect = CGRect(
+            x: selectionRect.minX * scaleX,
+            y: selectionRect.minY * scaleY,
+            width: selectionRect.width * scaleX,
+            height: selectionRect.height * scaleY
         )
-        return cgImage
+        
+        // 确保坐标在图像范围内
+        let clampedRect = CGRect(
+            x: max(0, min(imageRect.minX, imagePixelSize.width)),
+            y: max(0, min(imageRect.minY, imagePixelSize.height)),
+            width: min(imageRect.width, imagePixelSize.width - imageRect.minX),
+            height: min(imageRect.height, imagePixelSize.height - imageRect.minY)
+        )
+        return clampedRect
+    }
+    
+    /**
+     从NSImage中裁剪指定区域
+     */
+    private func cropImage(_ image: NSImage, toRect rect: CGRect) -> CGImage? {
+        // 获取NSImage的CGImage表示
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            return nil
+        }
+        
+        // 确保裁剪区域在图像范围内
+        let imageRect = CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height)
+        let clampedRect = rect.intersection(imageRect)
+        
+        // 如果裁剪区域为空，返回nil
+        guard !clampedRect.isEmpty else {
+            return nil
+        }
+        
+        // 裁剪图像
+        return cgImage.cropping(to: clampedRect)
     }
     
     /**
      清理资源
      */
     private func cleanUp() {
-        // 取消所有异步任务
-        for task in activeTasks {
-            task.cancel()
-        }
-        activeTasks.removeAll()
-        
-        // 先移除事件监听
-        if let monitor = localEventMonitor {
-            NSEvent.removeMonitor(monitor)
-            localEventMonitor = nil
-        }
+        // 清理全屏截图
+        fullScreenshot = nil
         
         // 先释放 SwiftUI 视图引用
         selectionView = nil
