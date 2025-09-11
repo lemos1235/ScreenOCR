@@ -9,7 +9,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusMenu: NSMenu!
     private var captureService: ScreenCaptureService!
     private var hotkeyManager: HotkeyManager!
-    private var floatingWindowManager: FloatingWindowManager!
+    private var directImageManager: DirectImageWindowManager!
     private var settingsWindowManager: SettingsWindowManager!
     
     // 当前选择的OCR语言
@@ -25,8 +25,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 初始化截图服务
         captureService = ScreenCaptureService()
         
-        // 初始化浮动窗口管理器
-        floatingWindowManager = FloatingWindowManager()
+        // 初始化直接图像管理器
+        directImageManager = DirectImageWindowManager()
         
         // 初始化快捷键管理器
         hotkeyManager = HotkeyManager()
@@ -223,9 +223,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 暂时隐藏设置窗口（如果可见），避免全局快捷键触发时激活它
         settingsWindowManager.prepareForGlobalHotkey()
         
+        
         // 启动截图选区模式
-        captureService.startCapture { [weak self] image in
-            guard let self = self, let capturedImage = image else {
+        captureService.startCapture { [weak self] image, rect in
+            guard let self = self, let capturedImage = image, let captureRect = rect else {
                 return
             }
             
@@ -256,9 +257,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     }
                 }
             } else {
-                // 普通模式：创建浮动窗口
+                // 普通模式：直接显示图像在截图区域
                 let nsimage = NSImage(cgImage: capturedImage, size: NSSize(width: capturedImage.width, height: capturedImage.height))
-                self.floatingWindowManager.createFloatingWindow(with: nsimage, languages: self.selectedLanguages)
+                self.directImageManager.showImage(nsimage, at: captureRect, languages: self.selectedLanguages)
             }
         }
     }
