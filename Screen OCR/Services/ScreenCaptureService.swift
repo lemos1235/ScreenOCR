@@ -9,13 +9,15 @@ import Foundation
  */
 class ScreenCaptureService: NSObject {
     // 截图结果回调
-    typealias CaptureCompletion = (CGImage?) -> Void
+    typealias CaptureCompletion = (CGImage?, CGRect?) -> Void
     
     // 当前的截图完成回调
     private var currentCompletion: CaptureCompletion?
     
     // 截图窗口
     private var overlayWindow: NSWindow?
+
+    /// 选区视图
     private var selectionView: SelectionOverlayView?
     
     // 保存截图前的活动应用，用于截图后恢复
@@ -46,7 +48,7 @@ class ScreenCaptureService: NSObject {
         checkScreenCapturePermission { [weak self] hasPermission in
             guard let self = self, hasPermission else {
                 // 没有权限时调用回调返回nil
-                completion(nil)
+                completion(nil, nil)
                 // 恢复之前的活动应用
                 self?.previousActiveApp?.activate(options: .activateIgnoringOtherApps)
                 return
@@ -70,7 +72,7 @@ class ScreenCaptureService: NSObject {
      */
     func cancelCapture() {
         cleanUp()
-        currentCompletion?(nil)
+        currentCompletion?(nil, nil)
         currentCompletion = nil
         
         // 恢复之前的活动应用
@@ -208,7 +210,7 @@ class ScreenCaptureService: NSObject {
         // 检查是否有全屏截图
         guard let fullScreenImage = fullScreenshot else {
             cleanUp()
-            currentCompletion?(nil)
+            currentCompletion?(nil, nil)
             // 恢复之前的活动应用
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
                 self?.previousActiveApp?.activate(options: .activateIgnoringOtherApps)
@@ -220,7 +222,7 @@ class ScreenCaptureService: NSObject {
         // 获取主屏幕信息
         guard let mainScreen = NSScreen.main else {
             cleanUp()
-            currentCompletion?(nil)
+            currentCompletion?(nil, nil)
             // 恢复之前的活动应用
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
                 self?.previousActiveApp?.activate(options: .activateIgnoringOtherApps)
@@ -252,8 +254,8 @@ class ScreenCaptureService: NSObject {
             // 保存之前活动应用的引用
             let app = self.previousActiveApp
             
-            // 调用回调
-            self.currentCompletion?(croppedImage)
+            // 调用回调，包含截图区域信息
+            self.currentCompletion?(croppedImage, rect)
             self.currentCompletion = nil
             
             // 恢复之前的活动应用

@@ -1,5 +1,19 @@
 import SwiftUI
 
+// MARK: - Custom View Modifier for Disabling Focus
+struct NoFocusModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .focusable(false)
+    }
+}
+
+extension View {
+    func noFocus() -> some View {
+        modifier(NoFocusModifier())
+    }
+}
+
 struct SettingsView: View {
     @EnvironmentObject private var viewModel: SettingsViewModel
     @State private var selectedTab = 0
@@ -32,6 +46,7 @@ struct SettingsView: View {
         }
         .padding()
         .frame(width: 550, height: 350)
+        .focusable(false)
     }
 }
 
@@ -64,6 +79,7 @@ struct GeneralSettingsView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
+        .focusable(false)
     }
 }
 
@@ -108,6 +124,7 @@ struct CaptureSettingsView: View {
                         }
                     }
                     .frame(width: 100)
+                    .disabled(viewModel.selectedModifiers.isEmpty || (viewModel.selectedModifiers.count == 1 && viewModel.selectedModifiers.contains(.shift)))
                 }
                 .padding(.leading)
             }
@@ -120,37 +137,56 @@ struct CaptureSettingsView: View {
                 .padding(.bottom, 5)
             
             VStack(alignment: .leading, spacing: 15) {
-                VStack(alignment: .leading, spacing: 15) {
-                    RadioButtonView(
-                        title: "Normal Mode",
-                        subtitle: "Show floating window after capture",
-                        isSelected: Binding(
-                            get: { !viewModel.clipboardMode },
-                            set: { if $0 { viewModel.clipboardMode = false } }
-                        )
-                    )
-                    
-                    RadioButtonView(
-                        title: "Clipboard Mode",
-                        subtitle: "Copy text directly to clipboard after capture",
-                        isSelected: Binding(
-                            get: { viewModel.clipboardMode },
-                            set: { if $0 { viewModel.clipboardMode = true } }
-                        )
-                    )
+                // Radio Button Group with custom spacing
+                VStack(alignment: .leading, spacing: 12) {
+                    Picker("", selection: $viewModel.clipboardMode) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Normal Mode")
+                                .fontWeight(.medium)
+                            Text("Show floating window after capture")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .tag(false)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Clipboard Mode")
+                                .fontWeight(.medium)
+                            Text("Copy text directly to clipboard after capture")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .tag(true)
+                    }
+                    .pickerStyle(RadioGroupPickerStyle())
+                    .labelsHidden()
+                    .focusable(false)
                 }
                 .padding(.leading)
                 
-                if viewModel.clipboardMode {
-                    Toggle("Play sound after copying", isOn: $viewModel.playSoundOnCopy)
-                        .padding(.leading, 35)
+                // Fixed height container for the conditional toggle
+                VStack(alignment: .leading) {
+                    if viewModel.clipboardMode {
+                        Toggle("Play sound after copying", isOn: $viewModel.playSoundOnCopy)
+                            .padding(.leading, 35)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    } else {
+                        // Invisible placeholder to maintain consistent height
+                        Toggle("", isOn: .constant(false))
+                            .padding(.leading, 35)
+                            .opacity(0)
+                            .disabled(true)
+                    }
                 }
+                .frame(height: 20) // Fixed height to prevent layout shifts
+                .animation(.easeInOut(duration: 0.2), value: viewModel.clipboardMode)
             }
             
             Spacer()
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
+        .focusable(false)
     }
 }
 
@@ -184,6 +220,7 @@ struct OCRSettingsView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
+        .focusable(false)
     }
     
     // 根据语言代码获取国旗表情符号
@@ -298,38 +335,10 @@ struct AboutView: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
+        .focusable(false)
     }
 }
 
-// MARK: - Custom Radio Button
-struct RadioButtonView: View {
-    let title: String
-    let subtitle: String
-    let isSelected: Binding<Bool>
-    
-    var body: some View {
-        Button(action: {
-            isSelected.wrappedValue = true
-        }) {
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: isSelected.wrappedValue ? "circle.inset.filled" : "circle")
-                    .font(.system(size: 16))
-                    .foregroundColor(isSelected.wrappedValue ? .accentColor : .secondary)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .fontWeight(.medium)
-                    
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
 
 // Preview
 struct SettingsView_Previews: PreviewProvider {
