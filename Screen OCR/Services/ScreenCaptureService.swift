@@ -24,9 +24,6 @@ class ScreenCaptureService: NSObject {
     // 全屏截图，用于显示在选区界面背景
     private var fullScreenshot: NSImage?
     
-    // UserDefaults键
-    private let isFirstLaunchKey = "isFirstLaunch"
-    
     override init() {
         super.init()
     }
@@ -41,27 +38,49 @@ class ScreenCaptureService: NSObject {
         
         // 存储回调
         currentCompletion = completion
-        
+
         // 检查屏幕录制权限
-        checkScreenCapturePermission { [weak self] hasPermission in
-            guard let self = self, hasPermission else {
-                // 没有权限时调用回调返回nil
-                completion(nil)
-                // 恢复之前的活动应用
-                self?.previousActiveApp?.activate(options: .activateIgnoringOtherApps)
-                return
+        if !CGRequestScreenCaptureAccess() {
+            let key = "screen_permission_already_requested"
+            let alreadyRequested = UserDefaults.standard.bool(forKey: key)
+            if alreadyRequested {
+                // 用户已拒绝，系统不再弹窗
+                showPermissionAlert()
+            } else {
+                // 首次请求，只触发系统弹窗
+                UserDefaults.standard.set(true, forKey: key)
             }
-            
-            // 先进行全屏截图，然后创建覆盖窗口
-            self.captureFullScreen { [weak self] fullScreenImage in
-                guard let self = self else { return }
-                self.fullScreenshot = fullScreenImage
-                
-                // 创建覆盖窗口
-                DispatchQueue.main.async {
-                    self.createOverlayWindow()
-                }
+            completion(nil)
+            return
+        }
+
+        // 先进行全屏截图，然后创建覆盖窗口
+        captureFullScreen { [weak self] fullScreenImage in
+            guard let self = self else { return }
+            self.fullScreenshot = fullScreenImage
+
+            // 创建覆盖窗口
+            DispatchQueue.main.async {
+                self.createOverlayWindow()
             }
+        }
+    }
+
+    /**
+     显示权限提示窗口
+     */
+    func showPermissionAlert() {
+        let alert = NSAlert()
+        alert.messageText = "Screen Recording Permission Required"
+        alert.informativeText = "Screen OCR needs screen recording permission to capture your screen."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Open System Settings")
+        alert.addButton(withTitle: "Cancel")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            NSWorkspace.shared.open(
+                URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!
+            )
         }
     }
     
@@ -109,49 +128,6 @@ class ScreenCaptureService: NSObject {
         // 转换为NSImage
         let nsImage = NSImage(cgImage: cgImage, size: screenRect.size)
         completion(nsImage)
-    }
-    
-    /**
-     检查屏幕录制权限
-     */
-    private func checkScreenCapturePermission(completion: @escaping (Bool) -> Void) {
-        // 对于CGWindowListCreateImage，我们仍然需要权限，但不会显示录制指示器
-        switch CGPreflightScreenCaptureAccess() {
-        case true:
-            // 已经有权限
-            completion(true)
-        case false:
-            // 检查是否是首次启动
-            let isFirstLaunch = UserDefaults.standard.object(forKey: isFirstLaunchKey) == nil
-            
-            // 如果是首次启动，标记为非首次启动并直接请求权限
-            if isFirstLaunch {
-                UserDefaults.standard.set(false, forKey: isFirstLaunchKey)
-                CGRequestScreenCaptureAccess()
-                completion(false)
-                return
-            }
-            
-            // 非首次启动，显示提示
-            // 请求权限
-            CGRequestScreenCaptureAccess()
-            
-            // 提示用户
-            let alert = NSAlert()
-            alert.messageText = "需要屏幕录制权限"
-            alert.informativeText = "此应用需要屏幕录制权限才能进行截图。请在系统偏好设置的安全性与隐私中启用此权限。"
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "去设置")
-            alert.addButton(withTitle: "取消")
-            
-            let response = alert.runModal()
-            if response == .alertFirstButtonReturn {
-                // 打开系统偏好设置
-                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
-            }
-            
-            completion(false)
-        }
     }
     
     /**
