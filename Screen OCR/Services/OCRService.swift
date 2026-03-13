@@ -73,7 +73,7 @@ class OCRService {
             request.recognitionLanguages = languages
         } else {
             // 默认支持多种语言
-            request.recognitionLanguages = ["zh-Hans", "zh-Hant", "ja-JP", "ko-KR", "en-US", "fr-FR", "de-DE", "es-ES", "it-IT", "pt-BR", "ru-RU"]
+            request.recognitionLanguages = ["ja-JP", "zh-Hans", "zh-Hant", "ko-KR", "en-US", "fr-FR", "de-DE", "es-ES", "it-IT", "pt-BR", "ru-RU"]
             request.automaticallyDetectsLanguage = true
         }
         

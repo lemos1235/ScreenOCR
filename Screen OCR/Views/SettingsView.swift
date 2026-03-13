@@ -90,7 +90,10 @@ struct CaptureSettingsView: View {
                                             viewModel.selectedModifiers.append(modifier)
                                         }
                                     } else {
-                                        viewModel.selectedModifiers.removeAll { $0 == modifier }
+                                        let remaining = viewModel.selectedModifiers.filter { $0 != modifier }
+                                        if remaining.contains(where: { $0 != .shift }) {
+                                            viewModel.selectedModifiers = remaining
+                                        }
                                     }
                                 }
                             )) {
@@ -113,39 +116,37 @@ struct CaptureSettingsView: View {
             }
             
             Divider()
-                .padding(.vertical, 10)
             
             Text("Capture Mode")
                 .font(.headline)
                 .padding(.bottom, 5)
             
-            VStack(alignment: .leading, spacing: 15) {
-                VStack(alignment: .leading, spacing: 15) {
-                    RadioButtonView(
-                        title: "Normal Mode",
-                        subtitle: "Show floating window after capture",
-                        isSelected: Binding(
-                            get: { !viewModel.clipboardMode },
-                            set: { if $0 { viewModel.clipboardMode = false } }
-                        )
-                    )
-                    
-                    RadioButtonView(
-                        title: "Clipboard Mode",
-                        subtitle: "Copy text directly to clipboard after capture",
-                        isSelected: Binding(
-                            get: { viewModel.clipboardMode },
-                            set: { if $0 { viewModel.clipboardMode = true } }
-                        )
-                    )
+            Picker("", selection: $viewModel.clipboardMode) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Normal Mode")
+                    Text("Show floating window after capture")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
-                .padding(.leading)
-                
-                if viewModel.clipboardMode {
-                    Toggle("Play sound after copying", isOn: $viewModel.playSoundOnCopy)
-                        .padding(.leading, 35)
+                .tag(false)
+            
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Clipboard Mode")
+                    Text("Copy text directly to clipboard after capture")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
+                .padding(.top, 12)
+                .tag(true)
             }
+            .pickerStyle(.radioGroup)
+            .padding(.leading)
+
+            Toggle("Play sound after copying", isOn: $viewModel.playSoundOnCopy)
+                .padding(.leading, 44)
+                .padding(.top, -8)
+                .opacity(viewModel.clipboardMode ? 1 : 0)
+                .disabled(!viewModel.clipboardMode)
             
             Spacer()
         }
@@ -298,36 +299,6 @@ struct AboutView: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - Custom Radio Button
-struct RadioButtonView: View {
-    let title: String
-    let subtitle: String
-    let isSelected: Binding<Bool>
-    
-    var body: some View {
-        Button(action: {
-            isSelected.wrappedValue = true
-        }) {
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: isSelected.wrappedValue ? "circle.inset.filled" : "circle")
-                    .font(.system(size: 16))
-                    .foregroundColor(isSelected.wrappedValue ? .accentColor : .secondary)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .fontWeight(.medium)
-                    
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle())
     }
 }
 
