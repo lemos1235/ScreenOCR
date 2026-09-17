@@ -39,19 +39,30 @@ class ScreenCaptureService: NSObject {
         // 存储回调
         currentCompletion = completion
 
-        // 检查屏幕录制权限
-        if !CGRequestScreenCaptureAccess() {
-            let key = "screen_permission_already_requested"
-            let alreadyRequested = UserDefaults.standard.bool(forKey: key)
+        // 检查屏幕录制权限（先静默检查，避免反复触发系统弹窗）
+        let permissionKey = "screen_permission_already_requested"
+        if !CGPreflightScreenCaptureAccess() {
+            let alreadyRequested = UserDefaults.standard.bool(forKey: permissionKey)
             if alreadyRequested {
-                // 用户已拒绝，系统不再弹窗
+                // 之前已请求过但当前仍无权限，系统不会再次弹窗，弹出引导提示
                 showPermissionAlert()
             } else {
-                // 首次请求，只触发系统弹窗
-                UserDefaults.standard.set(true, forKey: key)
+                // 首次请求，触发系统权限弹窗
+                UserDefaults.standard.set(true, forKey: permissionKey)
+                _ = CGRequestScreenCaptureAccess()
             }
+            cleanUp()
+            currentCompletion = nil
             completion(nil)
+            
+            // 恢复之前的活动应用
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.previousActiveApp?.activate(options: .activateIgnoringOtherApps)
+                self?.previousActiveApp = nil
+            }
             return
+        } else {
+            UserDefaults.standard.removeObject(forKey: permissionKey)
         }
 
         // 先进行全屏截图，然后创建覆盖窗口
@@ -71,16 +82,33 @@ class ScreenCaptureService: NSObject {
      */
     func showPermissionAlert() {
         let alert = NSAlert()
-        alert.messageText = "Screen Recording Permission Required"
-        alert.informativeText = "Screen OCR needs screen recording permission to capture your screen."
+        alert.messageText = "需要屏幕录制权限"
+        alert.informativeText = "Screen OCR 需要屏幕录制权限才能截屏。\n\n请在【系统设置 -> 隐私与安全性 -> 屏幕与系统音频录制】中勾选允许。\n\n提示：若您刚刚在系统设置中勾选了权限，必须【重启应用】设置才会生效。"
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "打开系统设置")
+        alert.addButton(withTitle: "重启应用")
+        alert.addButton(withTitle: "取消")
 
-        if alert.runModal() == .alertFirstButtonReturn {
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
             NSWorkspace.shared.open(
                 URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!
             )
+        } else if response == .alertSecondButtonReturn {
+            relaunchApp()
+        }
+    }
+
+    /**
+     重启当前应用（用于权限变更后生效）
+     */
+    private func relaunchApp() {
+        let url = Bundle.main.bundleURL
+        let config = NSWorkspace.OpenConfiguration()
+        NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
+            DispatchQueue.main.async {
+                NSApplication.shared.terminate(nil)
+            }
         }
     }
     
